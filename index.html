@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="robots" content="noindex,nofollow" />
+  <meta name="theme-color" content="#0d2922" />
+  <meta name="description" content="MEDITERRANEA: Menù Settimanale Famiglia, Database Pietanze e Sincronizzazione Cloud." />
+  <link rel="manifest" href="manifest.json" />
+  <title>MEDITERRANEA — Menù Settimanale Famiglia &amp; Cloud</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+  <!-- html2canvas per generare l'immagine HD del menù da inviare su WhatsApp -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+
+  <div class="app-layout">
+    <!-- SIDEBAR (STILE TITAN GYM) -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">🌿</div>
+        <div>
+          <strong>MEDITERRANEA</strong>
+          <small>MENÙ FAMIGLIA · CLOUD</small>
+        </div>
+      </div>
+
+      <div class="navlabel">IL TUO PIANO</div>
+      <button class="navbtn active" data-view="planner" onclick="switchView('planner')">
+        <span>📅</span>Menù Settimanale
+      </button>
+      <button class="navbtn" data-view="database" onclick="switchView('database')">
+        <span>🍲</span>Database Pietanze (<span id="nav-dish-count">0</span>)
+      </button>
+      <button class="navbtn" data-view="export" onclick="switchView('export')">
+        <span>📸</span>Immagine &amp; WhatsApp
+      </button>
+
+      <div class="navlabel">SINCRONIZZAZIONE</div>
+      <button class="navbtn" onclick="openCloudBackupModal()">
+        <span>☁️</span>Cloud &amp; Backup
+      </button>
+      <button class="navbtn" id="install-pwa-btn" onclick="installPWA()">
+        <span>📲</span>Installa su Telefono
+      </button>
+
+      <div class="sidefoot">MEDITERRANEA Cloud · Sincronizzato su PC e Cellulare</div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-area">
+      <!-- TOPBAR CON STATO CLOUD (COME TITAN GYM) -->
+      <div class="topbar">
+        <div>
+          <div class="eyebrow" id="page-eyebrow">DIETA MEDITERRANEA · PIANO FAMIGLIA</div>
+          <h1 id="page-title">Menù Settimanale</h1>
+        </div>
+        <div class="top-actions">
+          <span class="cloud-badge" id="cloud-status-badge" onclick="syncFromCloud(true)" title="Clicca per sincronizzare ora col Cloud">
+            ☁️ Cloud Attivo
+          </span>
+          <span class="online-badge" id="online-status-badge">● Online</span>
+          <button class="btn btn-soft" onclick="openCloudBackupModal()">⇧ Backup</button>
+        </div>
+      </div>
+
+      <!-- ==================== VIEW 1: WEEKLY PLANNER ==================== -->
+      <section id="view-planner">
+        <div class="hero-banner">
+          <div class="eyebrow" style="color: #fde68a;">🌿 STILE APP PALESTRA · SINCRONIZZAZIONE CLOUD 24/7</div>
+          <h2>Componi il menù di famiglia e condividilo in un tocco.</h2>
+          <p>Scegli antipasti, primi, secondi, contorni e frutta dal tuo database personalizzabile. Tutto quello che modifichi sul PC o sul cellulare si sincronizza in automatico nel Cloud.</p>
+          <div class="hero-actions">
+            <button class="btn btn-white" onclick="autoGenerateMenu()">✨ Genera Settimana Equilibrata</button>
+            <button class="btn btn-glass" onclick="switchView('export')">📸 Crea Immagine HD per Famiglia</button>
+            <button class="btn btn-glass" onclick="openDishFormModal()">➕ Aggiungi Nuovo Piatto</button>
+          </div>
+        </div>
+
+        <!-- Tracker Dieta Mediterranea stile App Palestra -->
+        <div class="tracker-card">
+          <div class="tracker-header">
+            <div class="tracker-title">
+              <h2>💪 Tracker Frequenze Settimanali (Dieta Mediterranea)</h2>
+              <span id="med-score-badge" class="badge-score">Bilanciamento: Ottimo</span>
+            </div>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+              <button class="btn btn-danger-ghost" onclick="clearWholeWeek()">🗑️ Svuota Settimana</button>
+            </div>
+          </div>
+          <div id="tracker-grid" class="tracker-grid">
+            <!-- Popolato da app.js -->
+          </div>
+        </div>
+
+        <!-- Griglia 7 Giorni -->
+        <div id="week-grid" class="week-grid">
+          <!-- Popolata da app.js -->
+        </div>
+      </section>
+
+      <!-- ==================== VIEW 2: DISHES DATABASE (CRUD) ==================== -->
+      <section id="view-database" class="hidden">
+        <div class="db-toolbar">
+          <div>
+            <h2 style="font-size: 1.15rem; font-weight: 800;">📚 Database Pietanze (Sincronizzato in Cloud)</h2>
+            <p style="font-size: 0.84rem; color: var(--text-muted);">
+              Inserisci nuovi piatti, modifica quelli già creati o elimina quelli che non usi: le modifiche saranno subito disponibili su tutti i tuoi dispositivi.
+            </p>
+          </div>
+          <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+            <button class="btn btn-primary" onclick="openDishFormModal()">
+              ➕ Nuovo Piatto
+            </button>
+            <button class="btn btn-outline" onclick="resetDatabaseToDefault()" title="Ripristina i piatti predefiniti">
+              🔄 Ripristina Predefiniti
+            </button>
+          </div>
+        </div>
+
+        <div class="db-toolbar" style="padding: 0.9rem 1.2rem;">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input
+              type="text"
+              id="db-search-input"
+              class="search-input"
+              placeholder="Cerca piatto per nome, ingrediente o nota (es. salmone, ceci, veloce)..."
+              oninput="renderDatabaseView()"
+            />
+          </div>
+        </div>
+
+        <div id="db-category-pills" class="category-pills">
+          <!-- Popolato da app.js -->
+        </div>
+
+        <div id="dishes-grid" class="dishes-grid">
+          <!-- Popolato da app.js -->
+        </div>
+      </section>
+
+      <!-- ==================== VIEW 3: EXPORT IMAGE & WHATSAPP ==================== -->
+      <section id="view-export" class="hidden export-section">
+        <div class="export-controls-card">
+          <div>
+            <h2 style="font-size: 1.15rem; font-weight: 800;">📸 Scheda Grafica ad Alta Definizione</h2>
+            <p style="font-size: 0.84rem; color: var(--text-muted);">
+              Scarica o condividi direttamente l'immagine nitida PNG sul gruppo WhatsApp di famiglia oppure invia il riepilogo testuale.
+            </p>
+          </div>
+          <div style="display: flex; gap: 0.65rem; flex-wrap: wrap; align-items: center;">
+            <input
+              type="text"
+              id="family-title-input"
+              class="form-control"
+              style="width: 240px;"
+              value="Menù Settimanale Famiglia"
+              placeholder="Titolo scheda..."
+              oninput="onFamilyTitleChange()"
+            />
+            <button class="btn btn-primary" id="btn-download-png" onclick="downloadMenuImage()">
+              📥 Scarica / Condividi Immagine PNG (HD)
+            </button>
+            <button class="btn btn-accent" onclick="shareWhatsAppText()">
+              💬 Invia Testo WhatsApp
+            </button>
+            <button class="btn btn-outline" onclick="copyMenuText()">
+              📋 Copia Testo
+            </button>
+          </div>
+        </div>
+
+        <div class="poster-wrapper">
+          <!-- Poster renderizzato a 1080px per nitidezza garantita anche da smartphone -->
+          <div id="menu-poster">
+            <div class="poster-header">
+              <div class="poster-brand">
+                <h2 id="poster-title-display">🌿 Menù Settimanale Famiglia</h2>
+                <p>Alimentazione Equilibrata &bull; Dieta Mediterranea</p>
+              </div>
+              <div class="poster-week-badge">
+                <span>Piano Settimanale</span>
+                <strong id="poster-date-range">Lunedì — Domenica</strong>
+              </div>
+            </div>
+
+            <div id="poster-rows" class="poster-table">
+              <!-- Popolato da app.js -->
+            </div>
+
+            <div class="poster-footer">
+              <span>🫒 Olio Extravergine d'Oliva a crudo &bull; 💧 1.5–2L di acqua al giorno</span>
+              <span id="poster-summary-stats">Equilibrio Mediterraneo controllato</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- MOBILE BOTTOM BAR (IDENTICA A TITAN GYM SU SMARTPHONE) -->
+    <nav class="mobilebar" aria-label="Navigazione Mobile">
+      <button class="active" data-view="planner" onclick="switchView('planner')">
+        <span>📅</span>Menù
+      </button>
+      <button data-view="database" onclick="switchView('database')">
+        <span>🍲</span>Pietanze
+      </button>
+      <button data-view="export" onclick="switchView('export')">
+        <span>📸</span>Immagine
+      </button>
+      <button onclick="openCloudBackupModal()">
+        <span>☁️</span>Cloud
+      </button>
+    </nav>
+  </div>
+
+  <!-- ==================== MODAL 1: SELEZIONE PIATTI PER PASTO ==================== -->
+  <div id="selector-modal" class="modal-backdrop" onclick="handleBackdropClick(event, 'selector-modal')">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h3 id="selector-modal-title">Scegli Pietanze — Lunedì Pranzo</h3>
+          <p style="font-size: 0.78rem; color: var(--text-muted);">Tocca i piatti per aggiungerli o rimuoverli da questo pasto</p>
+        </div>
+        <button class="modal-close" onclick="closeModal('selector-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="selector-tabs" class="selector-tabs">
+          <!-- Antipasti | Primi | Secondi | Contorni | Frutta -->
+        </div>
+        <div class="search-box" style="margin-bottom: 0.85rem;">
+          <span class="search-icon">🔍</span>
+          <input
+            type="text"
+            id="selector-search-input"
+            class="search-input"
+            placeholder="Filtra piatti in questa portata..."
+            oninput="renderSelectorList()"
+          />
+        </div>
+        <div id="selector-list" class="selector-list">
+          <!-- Elenco piatti -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="openDishFormModalFromSelector()">
+          ➕ Crea Nuovo Piatto
+        </button>
+        <button class="btn btn-primary" onclick="closeModal('selector-modal')">
+          ✅ Fatto
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 2: CREA / MODIFICA PIATTO (CRUD) ==================== -->
+  <div id="dish-form-modal" class="modal-backdrop" onclick="handleBackdropClick(event, 'dish-form-modal')">
+    <div class="modal-content" style="max-width: 540px;">
+      <div class="modal-header">
+        <h3 id="dish-form-title">Nuovo Piatto</h3>
+        <button class="modal-close" onclick="closeModal('dish-form-modal')">✕</button>
+      </div>
+      <form id="dish-form" onsubmit="saveDishForm(event)">
+        <div class="modal-body">
+          <input type="hidden" id="dish-id-input" />
+          <div class="form-grid">
+            <div class="form-group full">
+              <label for="dish-name-input">Nome della Pietanza *</label>
+              <input
+                type="text"
+                id="dish-name-input"
+                class="form-control"
+                required
+                placeholder="Es. Parmigiana leggera di melanzane al forno"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="dish-category-input">Portata (Ambito) *</label>
+              <select id="dish-category-input" class="form-control" required>
+                <option value="antipasto">🫒 Antipasto</option>
+                <option value="primo">🍝 Primo Piatto</option>
+                <option value="secondo">🐟 Secondo Piatto</option>
+                <option value="contorno">🥗 Contorno</option>
+                <option value="frutta">🍎 Frutta</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="dish-group-input">Gruppo Nutrizionale *</label>
+              <select id="dish-group-input" class="form-control" required>
+                <option value="cereali">🌾 Cereali / Pasta / Riso / Patate</option>
+                <option value="pesce">🐟 Pesce / Crostacei</option>
+                <option value="legumi">🫘 Legumi</option>
+                <option value="carne_bianca">🍗 Carne Bianca</option>
+                <option value="uova">🥚 Uova</option>
+                <option value="latticini">🧀 Formaggi / Latticini</option>
+                <option value="carne_rossa">🥩 Carne Rossa / Salumi</option>
+                <option value="verdura">🥦 Verdura e Ortaggi</option>
+                <option value="frutta">🍎 Frutta</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="dish-time-input">Tempo Preparazione</label>
+              <input
+                type="text"
+                id="dish-time-input"
+                class="form-control"
+                placeholder="Es. 20 min"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="dish-tags-input">Tag (separati da virgola)</label>
+              <input
+                type="text"
+                id="dish-tags-input"
+                class="form-control"
+                placeholder="Es. Veloce, Bambini, Cena"
+              />
+            </div>
+
+            <div class="form-group full">
+              <label for="dish-notes-input">Note / Ingredienti principali</label>
+              <input
+                type="text"
+                id="dish-notes-input"
+                class="form-control"
+                placeholder="Es. Cotto al forno senza frittura con basilico fresco"
+              />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('dish-form-modal')">Annulla</button>
+          <button type="submit" class="btn btn-primary">💾 Salva nel Database &amp; Cloud</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 3: CLOUD SYNC & BACKUP ==================== -->
+  <div id="cloud-backup-modal" class="modal-backdrop" onclick="handleBackdropClick(event, 'cloud-backup-modal')">
+    <div class="modal-content" style="max-width: 540px;">
+      <div class="modal-header">
+        <h3>☁️ Cloud Sync &amp; Backup Multi-Dispositivo</h3>
+        <button class="modal-close" onclick="closeModal('cloud-backup-modal')">✕</button>
+      </div>
+      <div class="modal-body" style="display:flex; flex-direction:column; gap:1rem;">
+        <p style="font-size:0.86rem; color:var(--text-muted);">
+          Proprio come nell'app palestra (TITAN GYM), i tuoi piatti e il menù settimanale sono sincronizzati automaticamente sul tuo Cloud Firebase (<code>mediterranean_menu/user_data</code>).
+        </p>
+        <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="syncFromCloud(true)">🔄 Sincronizza ora col Cloud</button>
+          <button class="btn btn-outline" onclick="exportBackupJson()">⇩ Scarica Backup JSON</button>
+        </div>
+        <div class="form-group" style="margin-top:0.5rem;">
+          <label for="backup-file-input">Ripristina da file JSON</label>
+          <input type="file" id="backup-file-input" class="form-control" accept=".json,application/json" onchange="restoreBackupJson(event)" />
+        </div>
+        <div style="background:#f0fdfa; border:1px solid #99f6e4; color:#0f766e; padding:0.85rem; border-radius:12px; font-size:0.8rem;">
+          💡 <b>Come usarla su più dispositivi:</b> Apri il link online dal tuo smartphone o PC. Ogni piatto aggiunto, modificato o selezionato viene replicato istantaneamente su tutti i dispositivi.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast">Operazione completata</div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
